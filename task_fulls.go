@@ -42,7 +42,7 @@ func (t *TaskFulls) before() {
 			t.wait.Add(1)
 			t.err <- t.p.Submit(func() {
 				defer t.wait.Done()
-				t.T.TaskClaim(v)
+				t.T.Claim()
 			})
 		}
 	}()
@@ -106,4 +106,8 @@ func (t *TaskFulls) getSourceData(table string) {
 		t.NdParam.dataChan <- rows
 	}
 	return
+}
+
+func (t *TaskFulls) Scan() {
+
 }

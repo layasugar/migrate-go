@@ -105,3 +105,7 @@ func (t *TaskRelations) getSourceData(table string) {
 	}
 	return
 }
+
+func (t *TaskRelations) Scan() {
+
+}

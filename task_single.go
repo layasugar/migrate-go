@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-type TaskOne struct {
+type Task struct {
 	*NdParam
 	*Param
 	T TaskInterface // 数据处理接口
 }
 
-func (t *TaskOne) before() {
+func (t *Task) before() {
 	var err error
 	t.Param.check()
 	t.NdParam = new(NdParam)
@@ -49,25 +49,25 @@ func (t *TaskOne) before() {
 	}()
 }
 
-func (t *TaskOne) Do() {
+func (t *Task) Do() {
 	t.before()
 	t.getSourceData(t.SourceTable)
 	t.after()
 }
 
-func (t *TaskOne) after() {
+func (t *Task) after() {
 	t.wait.Wait()
 	t.p.Release()
 	stop := time.Since(t.startTime)
 	log.Printf("结束迁移, 迁移名称: %s, 总迁移行数：%d, 耗时：%v", t.Name, t.total, stop)
 }
 
-func (t *TaskOne) getSourceData(table string) {
+func (t *Task) getSourceData(table string) {
 	var i int64
 	var number = t.SelectNumber
 	var wait = t.wait
 
-	if firstId := getFirstId(t.SourceConn, table); firstId != 0 {
+	if firstId := getFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
 		i = firstId
 	}
 
@@ -87,7 +87,7 @@ func (t *TaskOne) getSourceData(table string) {
 		}
 
 		if len(firstData) == 0 {
-			if secondId := getSecondId(t.SourceConn, table, i); secondId != 0 {
+			if secondId := getSecondId(t.SourceConn, table, t.PrimaryKeyName, i); secondId != 0 {
 				i = secondId
 				continue
 			}
@@ -99,4 +99,8 @@ func (t *TaskOne) getSourceData(table string) {
 		t.NdParam.dataChan <- rows
 	}
 	return
+}
+
+func (t *Task) Scan() {
+
 }
