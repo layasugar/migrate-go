@@ -1,8 +1,8 @@
 package mig
 
 import (
-	"database/sql"
 	"github.com/panjf2000/ants/v2"
+	"go.uber.org/atomic"
 	"gorm.io/gorm"
 	"sync"
 	"time"
@@ -13,17 +13,19 @@ const (
 	_defaultPK   = "id"
 )
 
-// 基础参数
-type NdParam struct {
-	total     int             // 迁移总行数
-	wait      *sync.WaitGroup // 等待协程结束
-	err       chan error      // 迁移错误
-	startTime time.Time       // 开始时间
-	p         *ants.Pool      // 协程池
-	dataChan  chan *sql.Rows  // 数据通道
+// ndParam 基础数据
+type ndParam struct {
+	p         *ants.Pool                    // 协程池
+	wait      *sync.WaitGroup               // 等待协程结束
+	total     int64                         // 未迁移总数
+	current   *atomic.Int64                 // 当前已迁移数
+	counter   chan *atomic.Int64            // 计数器
+	errChan   chan error                    // 迁移错误
+	dataChan  chan []map[string]interface{} // 数据通道
+	startTime time.Time                     // 开始时间
 }
 
-// 自定义参数
+// Param 自定义参数
 type Param struct {
 	PoolNumber     int      // 协程池数量
 	SelectNumber   int64    // 批量查询量

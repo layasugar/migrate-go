@@ -1,65 +1,49 @@
 package mig
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 	"log"
 	"runtime"
+	"testing"
 )
 
 type User struct {
-	Uid  int64  `json:"uid"`
+	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 
-type T1 struct{}
-
-func PayOrderAddColumnSessionNo() {
-	var t = TaskFulls{
-		T:               new(T1),
-		SubNumber:       32,
-		TableNameFormat: "user_%d",
+func TestTask_Do(t *testing.T) {
+	var task = Task{
 		Param: &Param{
-			SelectNumber: 2000,
+			SelectNumber: 1,
 			PoolNumber:   runtime.NumCPU(),
 			SourceConn:   getDbClient(),
 			SourceTable:  "user",
 			Name:         "迁移用户",
 		},
+		Claim: Claim,
 	}
-
-	t.Do()
-	t.Scan()
+	task.Do()
 }
 
-func (t *T1) Claim() {
-	var users []User
-	t.Scan(&users)
-
-	var d = make(map[string][]*models.NewPayOrder, 32)
-	for _, item := range data {
-		sessionNo := cache.GetSessionNoByCache(item.OrderNo)
-		if sessionNo == "" {
-			continue
-		}
-		item.ID = 0
-		var tmp = models.NewPayOrder{
-			PayOrder:  item,
-			SessionNo: sessionNo,
-		}
-		t := utils.GetTableNameBySessionNo(sessionNo)
-		d[t] = append(d[t], &tmp)
-	}
-
-	for table, item := range d {
-		err := conn.PayClient.Clauses(clause.Insert{Modifier: "IGNORE"}).Table(table).Create(item).Error
+func Claim(rows []map[string]interface{}) {
+	var d = make([]*User, 0, len(rows))
+	for _, item := range rows {
+		var tmp User
+		err := mapstructure.Decode(&item, &tmp)
 		if err != nil {
-			log.Printf("Claim err: %s", err.Error())
+			log.Print(err.Error())
 		}
+
+		d = append(d, &tmp)
 	}
+
+	log.Println(getString(d))
 }
 
 func getDbClient() *gorm.DB {
@@ -101,4 +85,14 @@ func getDbClient() *gorm.DB {
 		panic("failed to connect database")
 	}
 	return sqlDB
+}
+
+// GetString 只能是map和slice
+func getString(d interface{}) string {
+	bytesD, err := json.Marshal(d)
+	if err != nil {
+		return fmt.Sprintf("%v", d)
+	} else {
+		return string(bytesD)
+	}
 }

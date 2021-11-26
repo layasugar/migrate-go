@@ -1,15 +1,16 @@
 package mig
 
-// 任务数据处理接口
+// TaskInterface 任务数据处理接口
 type TaskInterface interface {
 	Claim()
 }
 
-// 基本任务接口
+// TaskBaseInterface 基本任务接口
 type TaskBaseInterface interface {
-	before()
+	// Do 开始执行
 	Do()
+
+	before()
+	mig()
 	after()
-	getSourceData(table string)
-	Scan()
 }
