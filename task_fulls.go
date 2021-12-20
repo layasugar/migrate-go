@@ -81,8 +81,17 @@ func (t *TaskFulls) mig() {
 		var number = t.SelectNumber
 		var table = fmt.Sprintf(t.TableNameFormat, tableFix)
 
-		if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
-			i = firstId
+		// 优先使用PrimaryKeyValue, 然后使用CreatedAtStart
+		if t.PrimaryKeyValue != 0 {
+			i = t.PrimaryKeyValue
+		} else if t.CreatedAtStart != "" {
+			if firstId := GetFirstIdByCreatedAt(t.SourceConn, table, t.PrimaryKeyName, t.CreatedAtStart); firstId != 0 {
+				i = firstId
+			}
+		} else {
+			if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
+				i = firstId
+			}
 		}
 
 		for {

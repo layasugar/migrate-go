@@ -27,12 +27,14 @@ type ndParam struct {
 
 // Param 自定义参数
 type Param struct {
-	PoolNumber     int      // 协程池数量
-	SelectNumber   int64    // 批量查询量
-	SourceConn     *gorm.DB // 源数据库连接
-	Name           string   // 迁移名称
-	SourceTable    string   // 迁移表名
-	PrimaryKeyName string   // 主键名称
+	PoolNumber      int      // 协程池数量
+	SelectNumber    int64    // 批量查询量
+	SourceConn      *gorm.DB // 源数据库连接
+	Name            string   // 迁移名称
+	SourceTable     string   // 迁移表名
+	PrimaryKeyName  string   // 主键名称
+	PrimaryKeyValue int64    // 可以设置一个主键的初始值
+	CreatedAtStart  string   // 2021-12-20 11:15:00
 }
 
 type dbId struct {

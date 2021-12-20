@@ -48,6 +48,19 @@ func GetFirstId(db *gorm.DB, table string, pk string) int64 {
 	return firstData.Id
 }
 
+func GetFirstIdByCreatedAt(db *gorm.DB, table string, pk, start string) int64 {
+	var firstData dbId
+	var orderBy = fmt.Sprintf("%s.%s %s", table, pk, _defaultSort)
+	var where = "created_at >= ?"
+
+	err := db.Table(table).Order(orderBy).Where(where, start).Limit(1).Find(&firstData).Error
+	if err != nil {
+		fmt.Printf("单条查询出错: err=%v", err.Error())
+		return 0
+	}
+	return firstData.Id
+}
+
 func GetSecondId(db *gorm.DB, table string, pk string, i int64) int64 {
 	var thirdData dbId
 	var orderBy = fmt.Sprintf("%s.%s %s", table, pk, _defaultSort)

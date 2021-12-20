@@ -78,8 +78,17 @@ func (t *TaskRelations) mig() {
 	defer close(t.dataChan)
 	defer close(t.counter)
 
-	if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
-		i = firstId
+	// 优先使用PrimaryKeyValue, 然后使用CreatedAtStart
+	if t.PrimaryKeyValue != 0 {
+		i = t.PrimaryKeyValue
+	} else if t.CreatedAtStart != "" {
+		if firstId := GetFirstIdByCreatedAt(t.SourceConn, table, t.PrimaryKeyName, t.CreatedAtStart); firstId != 0 {
+			i = firstId
+		}
+	} else {
+		if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
+			i = firstId
+		}
 	}
 
 	for {

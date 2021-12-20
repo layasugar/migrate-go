@@ -68,16 +68,28 @@ func (t *Task) mig() {
 	var i int64
 	var number = t.SelectNumber
 	var table = t.Param.SourceTable
+	var queryGte = fmt.Sprintf("%s >= ?", t.PrimaryKeyName)
+	var queryLte = fmt.Sprintf("%s < ?", t.PrimaryKeyName)
+
 	defer close(t.dataChan)
 	defer close(t.counter)
 
-	if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
-		i = firstId
+	// 优先使用PrimaryKeyValue, 然后使用CreatedAtStart
+	if t.PrimaryKeyValue != 0 {
+		i = t.PrimaryKeyValue
+	} else if t.CreatedAtStart != "" {
+		if firstId := GetFirstIdByCreatedAt(t.SourceConn, table, t.PrimaryKeyName, t.CreatedAtStart); firstId != 0 {
+			i = firstId
+		}
+	} else {
+		if firstId := GetFirstId(t.SourceConn, table, t.PrimaryKeyName); firstId != 0 {
+			i = firstId
+		}
 	}
 
 	for {
 		var data = make([]map[string]interface{}, 0, number)
-		err := t.SourceConn.Table(table).Where("id >= ?", i).Where("id < ?", i+number).Find(&data).Error
+		err := t.SourceConn.Table(table).Where(queryGte, i).Where(queryLte, i+number).Find(&data).Error
 		if nil != err {
 			log.Printf("迁移出错, 迁移名称: %s, err：%s", t.Name, err.Error())
 			return
